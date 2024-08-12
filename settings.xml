@@ -23,7 +23,8 @@
             <updatePolicy>never</updatePolicy>
             <checksumPolicy>fail</checksumPolicy>
           </snapshots>
-          <url>file:///home/ppalaga/zzz/rh-quarkus-platform-3.8.5.GA-maven-repository/maven-repository/</url>
+          <!--<url>file:///home/ppalaga/zzz/rh-quarkus-platform-3.8.5.GA-maven-repository/maven-repository/</url>-->
+          <url>file:///home/ppalaga/zzz/rh-quarkus-platform-3.8.5.SP1-maven-repository/maven-repository/</url>
           <layout>default</layout>
         </repository>
         <!--<repository>
@@ -82,7 +83,8 @@
             <updatePolicy>never</updatePolicy>
             <checksumPolicy>fail</checksumPolicy>
           </snapshots>
-          <url>file:///home/ppalaga/zzz/rh-quarkus-platform-3.8.5.GA-maven-repository/maven-repository/</url>
+          <!--<url>file:///home/ppalaga/zzz/rh-quarkus-platform-3.8.5.GA-maven-repository/maven-repository/</url>-->
+          <url>file:///home/ppalaga/zzz/rh-quarkus-platform-3.8.5.SP1-maven-repository/maven-repository/</url>
           <layout>default</layout>
         </pluginRepository>
         <!--<pluginRepository>

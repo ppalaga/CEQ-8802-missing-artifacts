@@ -12,8 +12,8 @@ find $LOCAL_REPO -type d -name '*-SNAPSHOT' | xargs rm -Rf
 find $LOCAL_REPO -type d -name '*redhat-*' | xargs rm -Rf
 
 # path to unzipped local repos
-#QUARKUS_MRRC_REPOSITORY=~/zzz/rh-quarkus-platform-3.8.5.SP1-maven-repository/maven-repository
-QUARKUS_MRRC_REPOSITORY=~/zzz/rh-quarkus-platform-3.8.5.GA-maven-repository/maven-repository
+QUARKUS_MRRC_REPOSITORY=~/zzz/rh-quarkus-platform-3.8.5.SP1-maven-repository/maven-repository
+#QUARKUS_MRRC_REPOSITORY=~/zzz/rh-quarkus-platform-3.8.5.GA-maven-repository/maven-repository
 CEQ_MRRC_REPOSITORY=$QUARKUS_MRRC_REPOSITORY
 #~/zzz/rhaf-camel-4.4.0-for-quarkus-3.8.0.CR5-maven-repository/maven-repository
 
@@ -30,14 +30,8 @@ CAMEL_VERSION=$(ls $CEQ_MRRC_REPOSITORY/org/apache/camel/camel-direct)
 #git clone -b 3.8.0-product -o midstream https://github.com/jboss-fuse/camel-quarkus.git
 #cd camel-quarkus
 
-# Install the missing Jetty BOM
-JETTY_VERSION=$(ls $CEQ_MRRC_REPOSITORY/org/eclipse/jetty/jetty-core)
-mkdir -p $LOCAL_REPO/org/eclipse/jetty/jetty-bom/$JETTY_VERSION
-
-MRRC_BASE_URL="https://maven.repository.redhat.com/earlyaccess/all"
-curl $MRRC_BASE_URL/org/eclipse/jetty/jetty-bom/$JETTY_VERSION/jetty-bom-$JETTY_VERSION.pom > $LOCAL_REPO/org/eclipse/jetty/jetty-bom/$JETTY_VERSION/jetty-bom-$JETTY_VERSION.pom
-curl $MRRC_BASE_URL/org/eclipse/jetty/jetty-bom/$JETTY_VERSION/jetty-bom-$JETTY_VERSION.pom.md5 > $LOCAL_REPO/org/eclipse/jetty/jetty-bom/$JETTY_VERSION/jetty-bom-$JETTY_VERSION.pom.md5
-curl $MRRC_BASE_URL/org/eclipse/jetty/jetty-bom/$JETTY_VERSION/jetty-bom-$JETTY_VERSION.pom.sha1 > $LOCAL_REPO/org/eclipse/jetty/jetty-bom/$JETTY_VERSION/jetty-bom-$JETTY_VERSION.pom.sha1
+# Workaround the the missing Jetty BOM
+cp poms/bom/src/main/generated/flattened-reduced-pom.xml poms/bom/pom.xml
 
 # Install the missing quarkus-test-artemis arifact from Indy
 INDY_BASE_URL=https://indy.psi.redhat.com/api/content/maven/group/static
@@ -57,6 +51,12 @@ else
   echo "Adding artemis-server constraint to poms/bom-test/pom.xml"
   sed -i "s|        </dependencies>|            <dependency>\n                <groupId>org.apache.activemq</groupId>\n                <artifactId>artemis-server</artifactId>\n                <version>${ARTEMIS_VERSION}</version>\n            </dependency>\n            <dependency>\n                <groupId>org.apache.activemq</groupId>\n                <artifactId>artemis-amqp-protocol</artifactId>\n                <version>${ARTEMIS_VERSION}</version>\n            </dependency>\n        </dependencies>|" poms/bom-test/pom.xml
 fi
+
+# Install mapstruct-processor from Indy
+MAPSTRUCT_VERSION=$(ls $CEQ_MRRC_REPOSITORY/org/mapstruct/mapstruct)
+mkdir -p $LOCAL_REPO/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION
+curl $INDY_BASE_URL/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.jar > $LOCAL_REPO/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.jar
+curl $INDY_BASE_URL/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.pom > $LOCAL_REPO/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.pom
 
 # get the Camel Quarkus version from the source tree
 CQ_VERSION="$(xmllint --format --xpath "/*[local-name() = 'project']/*[local-name() = 'version']/text()" pom.xml)"
