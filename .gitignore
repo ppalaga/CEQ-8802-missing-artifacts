@@ -1,3 +1,6 @@
+local-repo/
+mrrc/
+
 # Maven
 target/
 pom.xml.tag

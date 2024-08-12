@@ -2,20 +2,36 @@
 set -x
 set -e
 
-LOCAL_REPO=~/zzz/test-repo
-SETTINGS=~/orgs/ceq-3.8/reproducers/CEQ-8802-missing-artifacts/settings.xml
+# A script to reproduce https://issues.redhat.com/browse/CEQ-9743
+# Run this from the root repository of Camel Quarkus, the https://github.com/jboss-fuse/camel-quarkus 3.8.0-product branch
 
-mkdir -p $LOCAL_REPO
+SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+SETTINGS_TEMPLATE="$SCRIPT_DIR/settings-template.xml"
+SETTINGS="$SCRIPT_DIR/mrrc/settings.xml"
 
-# Remove all snapshots from local Maven repo unless it is empty
+LOCAL_REPO="$SCRIPT_DIR/local-repo"
+mkdir -p "$LOCAL_REPO"
+
+# Remove all snapshots and -redhat versions from local Maven repo
 find $LOCAL_REPO -type d -name '*-SNAPSHOT' | xargs rm -Rf
 find $LOCAL_REPO -type d -name '*redhat-*' | xargs rm -Rf
 
+# Download expand mrrc
+MRRC_ZIP_PATH="$SCRIPT_DIR/mrrc/rh-quarkus-platform-3.8.5.SP1-maven-repository.zip"
+if [ ! -f "$MRRC_ZIP_PATH" ]; then
+    curl https://download.eng.bos.redhat.com/rcm-guest/staging/quarkus/quarkus-platform-3.8.5.SP1.CR1/rh-quarkus-platform-3.8.5.SP1.CR1-maven-repository.zip > "$MRRC_ZIP_PATH"
+fi
+MRRC_EXPANDED_PATH="${MRRC_ZIP_PATH%.*}"
+if [ ! -d "$MRRC_EXPANDED_PATH" ]; then
+    unzip "$MRRC_ZIP_PATH" -d "$(dirname "$MRRC_EXPANDED_PATH")"
+fi
+
 # path to unzipped local repos
-QUARKUS_MRRC_REPOSITORY=~/zzz/rh-quarkus-platform-3.8.5.SP1-maven-repository/maven-repository
-#QUARKUS_MRRC_REPOSITORY=~/zzz/rh-quarkus-platform-3.8.5.GA-maven-repository/maven-repository
+QUARKUS_MRRC_REPOSITORY="$MRRC_EXPANDED_PATH/maven-repository"
+# For Platfrom builds there is only one MRRC.zip
 CEQ_MRRC_REPOSITORY=$QUARKUS_MRRC_REPOSITORY
-#~/zzz/rhaf-camel-4.4.0-for-quarkus-3.8.0.CR5-maven-repository/maven-repository
+
+sed "s|QUARKUS_MRRC_REPOSITORY|$QUARKUS_MRRC_REPOSITORY|g" "$SETTINGS_TEMPLATE" | sed "s|LOCAL_REPO|$LOCAL_REPO|g" > "$SETTINGS"
 
 # get the versions from the MRRC repos
 QUARKUS_BOM_GROUP_ID="com.redhat.quarkus.platform"
@@ -40,8 +56,8 @@ ARTEMIS_VERSION=$(ls $CEQ_MRRC_REPOSITORY/org/apache/activemq/artemis-commons)
 # strip the redhat suffix
 ARTEMIS_VERSION=$(echo $ARTEMIS_VERSION | sed 's|[-\\.]redhat-.*||')
 mkdir -p $LOCAL_REPO/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION
-curl $INDY_BASE_URL/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.jar > $LOCAL_REPO/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.jar
-curl $INDY_BASE_URL/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.pom > $LOCAL_REPO/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.pom
+curl --insecure $INDY_BASE_URL/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.jar > $LOCAL_REPO/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.jar
+curl --insecure $INDY_BASE_URL/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.pom > $LOCAL_REPO/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.pom
 # Replace quarkiverse-artemis.version in the top pom.xml
 echo -e "cd /*[local-name() = 'project']//*[local-name() = 'properties']//*[local-name() = 'quarkiverse-artemis.version']\n cat text()\n set $QUARKUS_ARTEMIS_VERSION\n cat text()\n save\n bye" | xmllint --shell pom.xml
 # Force some Artemis community versions in the test BOM
@@ -55,8 +71,8 @@ fi
 # Install mapstruct-processor from Indy
 MAPSTRUCT_VERSION=$(ls $CEQ_MRRC_REPOSITORY/org/mapstruct/mapstruct)
 mkdir -p $LOCAL_REPO/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION
-curl $INDY_BASE_URL/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.jar > $LOCAL_REPO/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.jar
-curl $INDY_BASE_URL/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.pom > $LOCAL_REPO/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.pom
+curl --insecure $INDY_BASE_URL/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.jar > $LOCAL_REPO/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.jar
+curl --insecure $INDY_BASE_URL/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.pom > $LOCAL_REPO/org/mapstruct/mapstruct-processor/$MAPSTRUCT_VERSION/mapstruct-processor-$MAPSTRUCT_VERSION.pom
 
 # get the Camel Quarkus version from the source tree
 CQ_VERSION="$(xmllint --format --xpath "/*[local-name() = 'project']/*[local-name() = 'version']/text()" pom.xml)"

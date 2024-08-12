@@ -2,7 +2,7 @@
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
                               http://maven.apache.org/xsd/settings-1.0.0.xsd">
-  <localRepository>/home/ppalaga/zzz/test-repo</localRepository>
+  <localRepository>LOCAL_REPO</localRepository>
 
   <profiles>
     <profile>
@@ -12,7 +12,7 @@
       </properties>
       <repositories>
         <repository>
-          <id>rh-quarkus-platform-3.8.5.SP1</id>
+          <id>quarkus-mrrc</id>
           <releases>
             <enabled>true</enabled>
             <updatePolicy>never</updatePolicy>
@@ -23,25 +23,9 @@
             <updatePolicy>never</updatePolicy>
             <checksumPolicy>fail</checksumPolicy>
           </snapshots>
-          <!--<url>file:///home/ppalaga/zzz/rh-quarkus-platform-3.8.5.GA-maven-repository/maven-repository/</url>-->
-          <url>file:///home/ppalaga/zzz/rh-quarkus-platform-3.8.5.SP1-maven-repository/maven-repository/</url>
+          <url>file://QUARKUS_MRRC_REPOSITORY</url>
           <layout>default</layout>
         </repository>
-        <!--<repository>
-          <id>rhaf-camel-4.4.0-for-quarkus-3.8.0.CR5</id>
-          <releases>
-            <enabled>true</enabled>
-            <updatePolicy>never</updatePolicy>
-            <checksumPolicy>warn</checksumPolicy>
-          </releases>
-          <snapshots>
-            <enabled>false</enabled>
-            <updatePolicy>never</updatePolicy>
-            <checksumPolicy>fail</checksumPolicy>
-          </snapshots>
-          <url>file:///home/ppalaga/zzz/rhaf-camel-4.4.0-for-quarkus-3.8.0.CR5-maven-repository/maven-repository/</url>
-          <layout>default</layout>
-        </repository>-->
         <repository>
             <id>central</id>
             <name>Maven Central Repo</name>
@@ -72,7 +56,7 @@
       </repositories>
       <pluginRepositories>
         <pluginRepository>
-          <id>rh-quarkus-platform-3.8.5.SP1</id>
+          <id>quarkus-mrrc</id>
           <releases>
             <enabled>true</enabled>
             <updatePolicy>never</updatePolicy>
@@ -83,25 +67,9 @@
             <updatePolicy>never</updatePolicy>
             <checksumPolicy>fail</checksumPolicy>
           </snapshots>
-          <!--<url>file:///home/ppalaga/zzz/rh-quarkus-platform-3.8.5.GA-maven-repository/maven-repository/</url>-->
-          <url>file:///home/ppalaga/zzz/rh-quarkus-platform-3.8.5.SP1-maven-repository/maven-repository/</url>
+          <url>file://QUARKUS_MRRC_REPOSITORY</url>
           <layout>default</layout>
         </pluginRepository>
-        <!--<pluginRepository>
-          <id>rhaf-camel-4.4.0-for-quarkus-3.8.0.CR5</id>
-          <releases>
-            <enabled>true</enabled>
-            <updatePolicy>never</updatePolicy>
-            <checksumPolicy>warn</checksumPolicy>
-          </releases>
-          <snapshots>
-            <enabled>false</enabled>
-            <updatePolicy>never</updatePolicy>
-            <checksumPolicy>fail</checksumPolicy>
-          </snapshots>
-          <url>file:///home/ppalaga/zzz/rhaf-camel-4.4.0-for-quarkus-3.8.0.CR5-maven-repository/maven-repository/</url>
-          <layout>default</layout>
-        </pluginRepository>-->
       </pluginRepositories>
     </profile>
   </profiles>
