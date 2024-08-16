@@ -49,24 +49,52 @@ CAMEL_VERSION=$(ls $CEQ_MRRC_REPOSITORY/org/apache/camel/camel-direct)
 # Workaround the the missing Jetty BOM
 cp poms/bom/src/main/generated/flattened-reduced-pom.xml poms/bom/pom.xml
 
-# Install the missing quarkus-test-artemis arifact from Indy
 INDY_BASE_URL=https://indy.psi.redhat.com/api/content/maven/group/static
+indy () {
+    local groupPath="$(echo "$1" | sed 's|\.|/|g')"
+    local artifactId="$2"
+    local version="$3"
+    local types="$4"
+    mkdir -p $LOCAL_REPO/$groupPath/$artifactId/$version
+    #export IFS=' '
+    for type in $types; do
+        echo "type =${type}="
+        curl --insecure $INDY_BASE_URL/$groupPath/$artifactId/$version/$artifactId-$version.$type > $LOCAL_REPO/$groupPath/$artifactId/$version/$artifactId-$version.$type
+    done
+}
+
+
+# Install the missing quarkus-test-artemis arifact from Indy
 QUARKUS_ARTEMIS_VERSION=$(ls $CEQ_MRRC_REPOSITORY/io/quarkiverse/artemis/quarkus-artemis-jms)
 ARTEMIS_VERSION=$(ls $CEQ_MRRC_REPOSITORY/org/apache/activemq/artemis-commons)
-# strip the redhat suffix
-ARTEMIS_VERSION=$(echo $ARTEMIS_VERSION | sed 's|[-\\.]redhat-.*||')
-mkdir -p $LOCAL_REPO/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION
-curl --insecure $INDY_BASE_URL/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.jar > $LOCAL_REPO/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.jar
-curl --insecure $INDY_BASE_URL/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.pom > $LOCAL_REPO/io/quarkiverse/artemis/quarkus-test-artemis/$QUARKUS_ARTEMIS_VERSION/quarkus-test-artemis-$QUARKUS_ARTEMIS_VERSION.pom
 # Replace quarkiverse-artemis.version in the top pom.xml
 echo -e "cd /*[local-name() = 'project']//*[local-name() = 'properties']//*[local-name() = 'quarkiverse-artemis.version']\n cat text()\n set $QUARKUS_ARTEMIS_VERSION\n cat text()\n save\n bye" | xmllint --shell pom.xml
+
+indy io.quarkiverse.artemis quarkus-test-artemis $QUARKUS_ARTEMIS_VERSION "pom jar"
+indy org.apache.activemq artemis-server $ARTEMIS_VERSION "pom jar"
+indy org.apache.activemq artemis-amqp-protocol $ARTEMIS_VERSION "pom jar"
+indy org.apache.activemq artemis-protocols $ARTEMIS_VERSION "pom jar"
+
+indy org.apache.activemq artemis-journal $ARTEMIS_VERSION "pom jar"
+indy org.apache.activemq artemis-jdbc-store $ARTEMIS_VERSION "pom jar"
+indy org.apache.activemq artemis-quorum-api $ARTEMIS_VERSION "pom jar"
+indy org.apache.activemq activemq-artemis-native 2.0.0.redhat-00005 "pom jar"
+
+indy org.jctools jctools-parent 2.1.2.redhat-00003 "pom"
+indy org.jctools jctools-core 2.1.2.redhat-00003 "pom jar"
+indy org.apache.commons commons-configuration2 2.8.0.redhat-00002 "pom jar"
+indy org.apache.commons commons-dbcp2 2.7.0.redhat-00001 "pom jar"
+indy org.apache.commons commons-parent 48.0.0.redhat-00001 "pom"
+indy org.apache apache 21.0.0.redhat-00001 "pom"
+indy org.apache apache 23.0.0.redhat-00011 "pom"
+
 # Force some Artemis community versions in the test BOM
-if grep -q "<artifactId>artemis-server</artifactId>" poms/bom-test/pom.xml; then
-  echo "artemis-server already present in poms/bom-test/pom.xml."
-else
-  echo "Adding artemis-server constraint to poms/bom-test/pom.xml"
-  sed -i "s|        </dependencies>|            <dependency>\n                <groupId>org.apache.activemq</groupId>\n                <artifactId>artemis-server</artifactId>\n                <version>${ARTEMIS_VERSION}</version>\n            </dependency>\n            <dependency>\n                <groupId>org.apache.activemq</groupId>\n                <artifactId>artemis-amqp-protocol</artifactId>\n                <version>${ARTEMIS_VERSION}</version>\n            </dependency>\n        </dependencies>|" poms/bom-test/pom.xml
-fi
+#if grep -q "<artifactId>artemis-server</artifactId>" poms/bom-test/pom.xml; then
+#  echo "artemis-server already present in poms/bom-test/pom.xml."
+#else
+#  echo "Adding artemis-server constraint to poms/bom-test/pom.xml"
+#  sed -i "s|        </dependencies>|            <dependency>\n                <groupId>org.apache.activemq</groupId>\n                <artifactId>artemis-server</artifactId>\n                <version>${ARTEMIS_VERSION}</version>\n            </dependency>\n            <dependency>\n                <groupId>org.apache.activemq</groupId>\n                <artifactId>artemis-amqp-protocol</artifactId>\n                <version>${ARTEMIS_VERSION}</version>\n            </dependency>\n        </dependencies>|" poms/bom-test/pom.xml
+#fi
 
 # Install mapstruct-processor from Indy
 MAPSTRUCT_VERSION=$(ls $CEQ_MRRC_REPOSITORY/org/mapstruct/mapstruct)

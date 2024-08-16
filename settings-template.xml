@@ -5,6 +5,7 @@
   <localRepository>LOCAL_REPO</localRepository>
 
   <profiles>
+
     <profile>
       <id>local-mrrc</id>
       <properties>
@@ -72,6 +73,78 @@
         </pluginRepository>
       </pluginRepositories>
     </profile>
+
+    <profile>
+      <id>indy</id>
+      <properties>
+          <buildMetaData.skip>true</buildMetaData.skip>
+      </properties>
+      <repositories>
+        <repository>
+          <id>quarkus-mrrc</id>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+            <checksumPolicy>warn</checksumPolicy>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+            <updatePolicy>never</updatePolicy>
+            <checksumPolicy>fail</checksumPolicy>
+          </snapshots>
+          <url>file://QUARKUS_MRRC_REPOSITORY</url>
+          <layout>default</layout>
+        </repository>
+        <repository>
+          <id>indy</id>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+            <checksumPolicy>warn</checksumPolicy>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+            <updatePolicy>never</updatePolicy>
+            <checksumPolicy>fail</checksumPolicy>
+          </snapshots>
+          <url>INDY_URL</url>
+          <layout>default</layout>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>quarkus-mrrc</id>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+            <checksumPolicy>warn</checksumPolicy>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+            <updatePolicy>never</updatePolicy>
+            <checksumPolicy>fail</checksumPolicy>
+          </snapshots>
+          <url>file://QUARKUS_MRRC_REPOSITORY</url>
+          <layout>default</layout>
+        </pluginRepository>
+        <pluginRepository>
+          <id>indy</id>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+            <checksumPolicy>warn</checksumPolicy>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+            <updatePolicy>never</updatePolicy>
+            <checksumPolicy>fail</checksumPolicy>
+          </snapshots>
+          <url>INDY_URL</url>
+          <layout>default</layout>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+
   </profiles>
 
   <activeProfiles>
