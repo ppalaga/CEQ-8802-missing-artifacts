@@ -30,8 +30,11 @@ fi
 QUARKUS_MRRC_REPOSITORY="$MRRC_EXPANDED_PATH/maven-repository"
 # For Platfrom builds there is only one MRRC.zip
 CEQ_MRRC_REPOSITORY=$QUARKUS_MRRC_REPOSITORY
+INDY_BASE_URL=https://indy.psi.redhat.com/api/content/maven/group/static
 
-sed "s|QUARKUS_MRRC_REPOSITORY|$QUARKUS_MRRC_REPOSITORY|g" "$SETTINGS_TEMPLATE" | sed "s|LOCAL_REPO|$LOCAL_REPO|g" > "$SETTINGS"
+sed "s|QUARKUS_MRRC_REPOSITORY|$QUARKUS_MRRC_REPOSITORY|g" "$SETTINGS_TEMPLATE" \
+  | sed "s|INDY_URL|$INDY_BASE_URL|g" \
+  | sed "s|LOCAL_REPO|$LOCAL_REPO|g" > "$SETTINGS"
 
 # get the versions from the MRRC repos
 QUARKUS_BOM_GROUP_ID="com.redhat.quarkus.platform"
@@ -49,7 +52,6 @@ CAMEL_VERSION=$(ls $CEQ_MRRC_REPOSITORY/org/apache/camel/camel-direct)
 # Workaround the the missing Jetty BOM
 cp poms/bom/src/main/generated/flattened-reduced-pom.xml poms/bom/pom.xml
 
-INDY_BASE_URL=https://indy.psi.redhat.com/api/content/maven/group/static
 indy () {
     local groupPath="$(echo "$1" | sed 's|\.|/|g')"
     local artifactId="$2"
@@ -69,24 +71,6 @@ QUARKUS_ARTEMIS_VERSION=$(ls $CEQ_MRRC_REPOSITORY/io/quarkiverse/artemis/quarkus
 ARTEMIS_VERSION=$(ls $CEQ_MRRC_REPOSITORY/org/apache/activemq/artemis-commons)
 # Replace quarkiverse-artemis.version in the top pom.xml
 echo -e "cd /*[local-name() = 'project']//*[local-name() = 'properties']//*[local-name() = 'quarkiverse-artemis.version']\n cat text()\n set $QUARKUS_ARTEMIS_VERSION\n cat text()\n save\n bye" | xmllint --shell pom.xml
-
-indy io.quarkiverse.artemis quarkus-test-artemis $QUARKUS_ARTEMIS_VERSION "pom jar"
-indy org.apache.activemq artemis-server $ARTEMIS_VERSION "pom jar"
-indy org.apache.activemq artemis-amqp-protocol $ARTEMIS_VERSION "pom jar"
-indy org.apache.activemq artemis-protocols $ARTEMIS_VERSION "pom jar"
-
-indy org.apache.activemq artemis-journal $ARTEMIS_VERSION "pom jar"
-indy org.apache.activemq artemis-jdbc-store $ARTEMIS_VERSION "pom jar"
-indy org.apache.activemq artemis-quorum-api $ARTEMIS_VERSION "pom jar"
-indy org.apache.activemq activemq-artemis-native 2.0.0.redhat-00005 "pom jar"
-
-indy org.jctools jctools-parent 2.1.2.redhat-00003 "pom"
-indy org.jctools jctools-core 2.1.2.redhat-00003 "pom jar"
-indy org.apache.commons commons-configuration2 2.8.0.redhat-00002 "pom jar"
-indy org.apache.commons commons-dbcp2 2.7.0.redhat-00001 "pom jar"
-indy org.apache.commons commons-parent 48.0.0.redhat-00001 "pom"
-indy org.apache apache 21.0.0.redhat-00001 "pom"
-indy org.apache apache 23.0.0.redhat-00011 "pom"
 
 # Force some Artemis community versions in the test BOM
 #if grep -q "<artifactId>artemis-server</artifactId>" poms/bom-test/pom.xml; then
@@ -180,6 +164,7 @@ mvn clean install -Plocal-mrrc \
 
 mvn clean test -Plocal-mrrc -fae \
   -s $SETTINGS \
+  -Pindy \
   -f integration-tests/jms-artemis-client/pom.xml \
   -Denforcer.skip \
   -Dcq.prod-artifacts.skip \
