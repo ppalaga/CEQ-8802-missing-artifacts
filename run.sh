@@ -17,10 +17,13 @@ find $LOCAL_REPO -type d -name '*-SNAPSHOT' | xargs rm -Rf
 find $LOCAL_REPO -type d -name '*redhat-*' | xargs rm -Rf
 
 # Download expand mrrc
-MRRC_ZIP_PATH="$SCRIPT_DIR/mrrc/rh-quarkus-platform-3.8.5.SP1-maven-repository.zip"
+MRRC_ZIP_PATH="$SCRIPT_DIR/mrrc/rh-quarkus-platform-3.8.5.SP2-maven-repository.zip"
+#MRRC_ZIP_PATH="$SCRIPT_DIR/mrrc/rh-quarkus-platform-3.8.5.SP1-maven-repository.zip"
 if [ ! -f "$MRRC_ZIP_PATH" ]; then
-    curl https://download.eng.bos.redhat.com/rcm-guest/staging/quarkus/quarkus-platform-3.8.5.SP1.CR1/rh-quarkus-platform-3.8.5.SP1.CR1-maven-repository.zip > "$MRRC_ZIP_PATH"
+    curl https://download.hosts.prod.upshift.rdu2.redhat.com/rcm-guest/staging/rhaf/scratch/quarkus-platform-3.8.5.DR4/rh-quarkus-platform-3.8.5.DR4-maven-repository.zip > "$MRRC_ZIP_PATH"
+    #curl https://download.eng.bos.redhat.com/rcm-guest/staging/quarkus/quarkus-platform-3.8.5.SP1.CR1/rh-quarkus-platform-3.8.5.SP1.CR1-maven-repository.zip > "$MRRC_ZIP_PATH"
 fi
+
 MRRC_EXPANDED_PATH="${MRRC_ZIP_PATH%.*}"
 if [ ! -d "$MRRC_EXPANDED_PATH" ]; then
     unzip "$MRRC_ZIP_PATH" -d "$(dirname "$MRRC_EXPANDED_PATH")"
@@ -88,13 +91,10 @@ indy org.apache.commons commons-parent 48.0.0.redhat-00001 "pom"
 indy org.apache apache 21.0.0.redhat-00001 "pom"
 indy org.apache apache 23.0.0.redhat-00011 "pom"
 
-# Force some Artemis community versions in the test BOM
-#if grep -q "<artifactId>artemis-server</artifactId>" poms/bom-test/pom.xml; then
-#  echo "artemis-server already present in poms/bom-test/pom.xml."
-#else
-#  echo "Adding artemis-server constraint to poms/bom-test/pom.xml"
-#  sed -i "s|        </dependencies>|            <dependency>\n                <groupId>org.apache.activemq</groupId>\n                <artifactId>artemis-server</artifactId>\n                <version>${ARTEMIS_VERSION}</version>\n            </dependency>\n            <dependency>\n                <groupId>org.apache.activemq</groupId>\n                <artifactId>artemis-amqp-protocol</artifactId>\n                <version>${ARTEMIS_VERSION}</version>\n            </dependency>\n        </dependencies>|" poms/bom-test/pom.xml
-#fi
+# Manage quarkus-test-artemis manually, while it is not managed by the platform BOM
+if ! grep -q "<version>$QUARKUS_ARTEMIS_VERSION</version>" integration-tests/jms-artemis-client/pom.xml ; then
+    sed -i "s|^    <dependencies>|\n    <dependencyManagement>\n        <dependencies>\n            <dependency>\n                <groupId>io.quarkiverse.artemis</groupId>\n                <artifactId>quarkus-test-artemis</artifactId>\n                <version>$QUARKUS_ARTEMIS_VERSION</version>\n            </dependency>\n        </dependencies>\n    </dependencyManagement>\n\n    <dependencies>|" integration-tests/jms-artemis-client/pom.xml
+fi
 
 # Install mapstruct-processor from Indy
 MAPSTRUCT_VERSION=$(ls $CEQ_MRRC_REPOSITORY/org/mapstruct/mapstruct)
@@ -108,6 +108,12 @@ CQ_VERSION="$(xmllint --format --xpath "/*[local-name() = 'project']/*[local-nam
 # Replace Camel version in the top pom.xml
 echo -e "cd /*[local-name() = 'project']//*[local-name() = 'parent']//*[local-name() = 'version']\n cat text()\n set $CAMEL_VERSION\n cat text()\n save\n bye" | xmllint --shell pom.xml
 echo -e "cd /*[local-name() = 'project']//*[local-name() = 'properties']//*[local-name() = 'camel.version']\n cat text()\n set $CAMEL_VERSION\n cat text()\n save\n bye" | xmllint --shell pom.xml
+
+
+# This should not be necessary after 3.8.5.DR5
+if ! grep -q "<artifactId>listenablefuture</artifactId>" product/superapp/pom.xml ; then
+    sed -i "s|<artifactId>camel-quarkus-kudu</artifactId>|<artifactId>camel-quarkus-kudu</artifactId>\n            <exclusions>\n                <exclusion>\n                    <groupId>com.google.guava</groupId>\n                    <artifactId>listenablefuture</artifactId>\n                </exclusion>\n            </exclusions>|" product/superapp/pom.xml
+fi
 
 # Build some required artifacts
 mvn clean install -N -Plocal-mrrc \
@@ -177,11 +183,11 @@ mvn clean install -Plocal-mrrc \
 # Run the tests
 # product/integration-tests-product/pom.xml
 #
-
 mvn clean test -Plocal-mrrc -fae \
   -s $SETTINGS \
-  -f integration-tests/jms-artemis-client/pom.xml \
-  -Denforcer.skip \
+  -DskipTests \
+  -Pmixed \
+  -f product/pom.xml \
   -Dcq.prod-artifacts.skip \
   -DnoVirtualDependencies \
   -Dquarkus.platform.group-id=$QUARKUS_BOM_GROUP_ID \
