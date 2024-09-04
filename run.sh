@@ -17,16 +17,23 @@ find $LOCAL_REPO -type d -name '*-SNAPSHOT' | xargs rm -Rf
 find $LOCAL_REPO -type d -name '*redhat-*' | xargs rm -Rf
 
 # Download expand mrrc
-MRRC_ZIP_PATH="$SCRIPT_DIR/mrrc/rh-quarkus-platform-3.8.5.SP2-maven-repository.zip"
-#MRRC_ZIP_PATH="$SCRIPT_DIR/mrrc/rh-quarkus-platform-3.8.5.SP1-maven-repository.zip"
+MRRC_URL="https://download.hosts.prod.upshift.rdu2.redhat.com/rcm-guest/staging/rhaf/scratch/quarkus-platform-3.8.6.DR4/rh-quarkus-platform-3.8.6.DR4-maven-repository.zip"
+MRRC_ZIP_PATH="$SCRIPT_DIR/mrrc/$(basename "$MRRC_URL")"
 if [ ! -f "$MRRC_ZIP_PATH" ]; then
-    curl https://download.hosts.prod.upshift.rdu2.redhat.com/rcm-guest/staging/rhaf/scratch/quarkus-platform-3.8.5.DR4/rh-quarkus-platform-3.8.5.DR4-maven-repository.zip > "$MRRC_ZIP_PATH"
-    #curl https://download.eng.bos.redhat.com/rcm-guest/staging/quarkus/quarkus-platform-3.8.5.SP1.CR1/rh-quarkus-platform-3.8.5.SP1.CR1-maven-repository.zip > "$MRRC_ZIP_PATH"
+    curl "$MRRC_URL" > "$MRRC_ZIP_PATH"
 fi
+
+ROOT_ZIP_DIR="$(unzip -l "$MRRC_ZIP_PATH" | awk '/\/$/{print $4; exit}')"
+ROOT_ZIP_DIR="${ROOT_ZIP_DIR%%/*}"
 
 MRRC_EXPANDED_PATH="${MRRC_ZIP_PATH%.*}"
 if [ ! -d "$MRRC_EXPANDED_PATH" ]; then
-    unzip "$MRRC_ZIP_PATH" -d "$(dirname "$MRRC_EXPANDED_PATH")"
+    MRRC_EXPANDED_TEMP_PATH="$SCRIPT_DIR/mrrc/temp"
+    rm -rf "$MRRC_EXPANDED_TEMP_PATH"
+    unzip -qq "$MRRC_ZIP_PATH" -d "$MRRC_EXPANDED_TEMP_PATH"
+    mkdir -p "$MRRC_EXPANDED_PATH"
+    mv -t "$MRRC_EXPANDED_PATH" "$MRRC_EXPANDED_TEMP_PATH/$ROOT_ZIP_DIR/"*
+    rm -rf "$MRRC_EXPANDED_TEMP_PATH"
 fi
 
 # path to unzipped local repos
@@ -114,6 +121,13 @@ echo -e "cd /*[local-name() = 'project']//*[local-name() = 'properties']//*[loca
 if ! grep -q "<artifactId>listenablefuture</artifactId>" product/superapp/pom.xml ; then
     sed -i "s|<artifactId>camel-quarkus-kudu</artifactId>|<artifactId>camel-quarkus-kudu</artifactId>\n            <exclusions>\n                <exclusion>\n                    <groupId>com.google.guava</groupId>\n                    <artifactId>listenablefuture</artifactId>\n                </exclusion>\n            </exclusions>|" product/superapp/pom.xml
 fi
+
+# Install SAP artifacts
+SAP_INTERNAL_BASE="https://nexus.fuse-qe.eng.rdu2.redhat.com/repository/sap-internal"
+SAP_LIB_DIR="integration-tests-jvm/sap/lib"
+mkdir -p "$SAP_LIB_DIR"
+curl $SAP_INTERNAL_BASE/com/sap/conn/idoc/sapidoc3/3.1.1/sapidoc3-3.1.1.jar > $SAP_LIB_DIR/sapidoc3.jar
+curl $SAP_INTERNAL_BASE/com/sap/conn/jco/sapjco3/3.1.4/sapjco3-3.1.4.jar > $SAP_LIB_DIR/sapjco3.jar
 
 # Build some required artifacts
 mvn clean install -N -Plocal-mrrc \
