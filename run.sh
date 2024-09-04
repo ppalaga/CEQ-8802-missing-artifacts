@@ -199,9 +199,7 @@ mvn clean install -Plocal-mrrc \
 #
 mvn clean test -Plocal-mrrc -fae \
   -s $SETTINGS \
-  -DskipTests \
-  -Pmixed \
-  -f product/pom.xml \
+  -f integration-tests-jvm/sap/pom.xml \
   -Dcq.prod-artifacts.skip \
   -DnoVirtualDependencies \
   -Dquarkus.platform.group-id=$QUARKUS_BOM_GROUP_ID \
