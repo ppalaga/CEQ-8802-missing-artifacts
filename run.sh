@@ -207,5 +207,4 @@ mvn clean test -Plocal-mrrc -fae \
   -Dquarkus.platform.version=$QUARKUS_BOM_VERSION \
   -Dcamel-quarkus.platform.group-id=$CQ_BOM_GROUP_ID \
   -Dcamel-quarkus.platform.artifact-id=$CQ_BOM_ARTIFACT_ID \
-  -Dcamel-quarkus.platform.version=$CQ_BOM_VERSION \
-  -Dcamel-quarkus.version=$CQ_VERSION
+  -Dcamel-quarkus.platform.version=$CQ_BOM_VERSION
